@@ -1,0 +1,357 @@
+{
+  "name": "Competitor Price & Content Tracker",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 7
+            }
+          ]
+        }
+      },
+      "id": "e158d503-c9c3-4efe-966b-9f0e9bd0ef6f",
+      "name": "Daily Trigger",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -1408,
+        112
+      ]
+    },
+    {
+      "parameters": {
+        "url": "https://script.google.com/macros/s/AKfycbztTSQo3uDiSnxMRmnb03lqmYZKXJ-NIRxo4YhJ6oJ-5-A8pxtwJVFQVrNDdIyI1cHL/exec?action=list",
+        "options": {}
+      },
+      "id": "ca74eaf7-5504-41c0-95dd-8c7d7545d334",
+      "name": "Get Competitor List",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -1200,
+        112
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const competitors = $input.first().json.competitors || [];\nreturn competitors.map(c => ({ json: c }));"
+      },
+      "id": "cb4d6ad1-ef16-48d1-9c9b-44994dbc1d7e",
+      "name": "Split Competitors",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1008,
+        112
+      ]
+    },
+    {
+      "parameters": {
+        "url": "={{$json.URL}}",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "text"
+            }
+          }
+        }
+      },
+      "id": "c76ed7cc-1a72-40b3-b197-ba9ee7e0ecfc",
+      "name": "Fetch Competitor Page",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -592,
+        112
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "extractHtmlContent",
+        "extractionValues": {
+          "values": [
+            {
+              "key": "extractedText",
+              "cssSelector": "={{$('Split Competitors').item.json.Selector || 'body'}}"
+            }
+          ]
+        },
+        "options": {
+          "trimValues": true
+        }
+      },
+      "id": "cb7bf5a3-eb4c-4393-89df-e1eb4af96949",
+      "name": "Extract Content",
+      "type": "n8n-nodes-base.html",
+      "typeVersion": 1.2,
+      "position": [
+        -400,
+        112
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "function simpleHash(str) {\n  let hash = 0;\n  for (let i = 0; i < str.length; i++) {\n    hash = ((hash << 5) - hash + str.charCodeAt(i)) | 0;\n  }\n  return hash.toString(16);\n}\n\nconst competitor = $('Split Competitors').item.json;\nconst text = ($json.extractedText || '').trim();\nconst newHash = simpleHash(text);\n\nconst oldText = competitor.LastSnapshot || '(no previous snapshot - this is the first check)';\nconst newText = text.slice(0, 4000);\n\nconst prompt = \"You are a marketing analyst tracking a competitor for a fashion brand. Compare the OLD and NEW page text below. ONLY report the following, and nothing else - ignore navigation, menus, generic descriptions, or anything not in this list:\\n\\n1. Sales, discounts, or price drops (include exact percentages/amounts if visible)\\n2. Buy-one-get-one or bundle deals\\n3. New seasonal collection launches (e.g. Summer, Eid, Winter)\\n4. Limited-time promotional campaigns\\n\\nIf none of these four things changed, respond with exactly: No relevant marketing activity detected.\\nIf some did, list only those, briefly and specifically.\\n\\nOLD PAGE CONTENT:\\n\" + oldText + \"\\n\\nNEW PAGE CONTENT:\\n\" + newText;\n\nreturn {\n  json: {\n    id: competitor.ID,\n    name: competitor.Name,\n    url: competitor.URL,\n    trackType: competitor.TrackType,\n    lastHash: competitor.LastHash,\n    lastSnapshot: competitor.LastSnapshot,\n    newHash,\n    newSnapshot: newText,\n    changed: newHash !== competitor.LastHash,\n    prompt\n  }\n};"
+      },
+      "id": "372acc14-745b-4a51-aa74-3d10c484f3de",
+      "name": "Hash & Compare",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -192,
+        112
+      ],
+      "executeOnce": false
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 1
+          },
+          "conditions": [
+            {
+              "id": "c1",
+              "leftValue": "={{$json.changed}}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "39e07b8e-6eb8-4744-ad7e-90c3aea52c45",
+      "name": "Has Content Changed?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        0,
+        112
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=...generateContent?key=YOUR_API_KEY_HERE",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ { \"contents\": [ { \"parts\": [ { \"text\": $json.prompt } ] } ] } }}",
+        "options": {}
+      },
+      "id": "a4e32640-7cbd-4f92-99cf-b699977e63ee",
+      "name": "Summarize with Gemini",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        576,
+        64
+      ],
+      "retryOnFail": true
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const resp = $json;\nlet summary = 'No summary returned.';\ntry {\n  summary = resp.candidates[0].content.parts[0].text.trim();\n} catch (e) {}\nconst prev = $('Hash & Compare').item.json;\nreturn { json: { ...prev, summary } };"
+      },
+      "id": "5a34b7a6-dd71-4708-bf94-2b53e6ea7157",
+      "name": "Parse Summary",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        864,
+        96
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://script.google.com/macros/s/AKfycbztTSQo3uDiSnxMRmnb03lqmYZKXJ-NIRxo4YhJ6oJ-5-A8pxtwJVFQVrNDdIyI1cHL/exec",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ { \"action\": \"recordChange\", \"competitorId\": $json.id, \"competitorName\": $json.name, \"hash\": $json.newHash, \"snapshot\": $json.newSnapshot, \"summary\": $json.summary } }}",
+        "options": {}
+      },
+      "id": "d781c447-175d-4cc1-8e7a-b5f96f707786",
+      "name": "Save Change Log",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1056,
+        -16
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://script.google.com/macros/s/AKfycbztTSQo3uDiSnxMRmnb03lqmYZKXJ-NIRxo4YhJ6oJ-5-A8pxtwJVFQVrNDdIyI1cHL/exec",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ { \"action\": \"touch\", \"id\": $json.id, \"hash\": $json.newHash, \"snapshot\": $json.newSnapshot } }}",
+        "options": {}
+      },
+      "id": "3c102e23-01c9-442e-a9e1-a5258d48e263",
+      "name": "Touch Last Checked",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        272,
+        240
+      ]
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        272,
+        96
+      ],
+      "id": "363a37b1-507b-4f0d-b8f0-cc19abcb8b93",
+      "name": "Wait",
+      "webhookId": "1d3aa62b-4f57-4f97-8f7a-971cd8d82720"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Daily Trigger": {
+      "main": [
+        [
+          {
+            "node": "Get Competitor List",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Competitor List": {
+      "main": [
+        [
+          {
+            "node": "Split Competitors",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Competitors": {
+      "main": [
+        [
+          {
+            "node": "Fetch Competitor Page",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Competitor Page": {
+      "main": [
+        [
+          {
+            "node": "Extract Content",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Content": {
+      "main": [
+        [
+          {
+            "node": "Hash & Compare",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Hash & Compare": {
+      "main": [
+        [
+          {
+            "node": "Has Content Changed?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Has Content Changed?": {
+      "main": [
+        [
+          {
+            "node": "Wait",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Touch Last Checked",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Summarize with Gemini": {
+      "main": [
+        [
+          {
+            "node": "Parse Summary",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Summary": {
+      "main": [
+        [
+          {
+            "node": "Save Change Log",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait": {
+      "main": [
+        [
+          {
+            "node": "Summarize with Gemini",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "b567d929-74f9-4330-aa06-e2eec7b20379",
+  "meta": {
+    "instanceId": "7b2683aa50c1a566a982b28126fbe03351ec1d7f8de05c468060bfb5d2e47927"
+  },
+  "nodeGroups": [],
+  "id": "wYXkxY4G7vbwv1zZ",
+  "tags": []
+}
