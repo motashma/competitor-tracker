@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Competitor Tracker</title>
+<style>
+  :root {
+    --bg: #0d0d0f;
+    --panel: #16161a;
+    --line: #2a2a30;
+    --text: #e9e9ec;
+    --muted: #9a9aa3;
+    --silver: #c7c9d1;
+    --accent: #e2e4ea;
+    --danger: #d16b6b;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  }
+  header {
+    padding: 28px 32px 20px;
+    border-bottom: 1px solid var(--line);
+  }
+  header h1 {
+    margin: 0;
+    font-size: 22px;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+  }
+  header p { margin: 6px 0 0; color: var(--muted); font-size: 13px; }
+  .wrap { max-width: 1000px; margin: 0 auto; padding: 28px 20px 60px; }
+  .card {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 20px;
+    margin-bottom: 24px;
+  }
+  .card h2 {
+    font-size: 15px;
+    margin: 0 0 16px;
+    color: var(--silver);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+  .row { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 10px; }
+  input, select {
+    background: #0f0f12;
+    border: 1px solid var(--line);
+    color: var(--text);
+    padding: 9px 12px;
+    border-radius: 6px;
+    font-size: 13px;
+    flex: 1;
+    min-width: 140px;
+  }
+  input::placeholder { color: var(--muted); }
+  button {
+    background: var(--accent);
+    color: #111;
+    border: none;
+    padding: 9px 18px;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  button:hover { opacity: 0.85; }
+  button.ghost {
+    background: transparent;
+    color: var(--muted);
+    border: 1px solid var(--line);
+  }
+  button.danger { background: var(--danger); color: #fff; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th { text-align: left; color: var(--muted); font-weight: 500; padding: 8px 6px; border-bottom: 1px solid var(--line); }
+  td { padding: 10px 6px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  tr:last-child td { border-bottom: none; }
+  .muted { color: var(--muted); font-size: 12px; }
+  .actions button { padding: 5px 10px; font-size: 12px; margin-right: 6px; }
+  .empty { color: var(--muted); font-size: 13px; padding: 12px 0; }
+  .badge {
+    display: inline-block;
+    font-size: 11px;
+    padding: 2px 8px;
+    border-radius: 20px;
+    border: 1px solid var(--line);
+    color: var(--muted);
+  }
+  .summary { max-width: 380px; white-space: pre-wrap; }
+  #configBar { display: none; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Competitor Tracker</h1>
+  <p>Automatically checks competitor websites every day, detects when something changes (prices, sales, new products), and summarizes it using AI — so you don't have to check each site manually.</p>
+</header>
+
+<div class="wrap">
+
+  <div class="card" id="configBar" style="display:none;">
+    <h2>Setup</h2>
+    <div class="row">
+      <input id="apiUrl" placeholder="Paste your Apps Script Web App URL here">
+      <button onclick="saveConfig()">Save</button>
+    </div>
+    <p class="muted">This is the URL you got from Deploy → New deployment in Apps Script.</p>
+  </div>
+
+  <div class="card">
+    <h2>Add Competitor</h2>
+    <p class="muted" style="margin: -8px 0 16px;">Add a competitor's website here. The system will start checking it automatically every day.</p>
+    <div class="row">
+      <input id="newName" placeholder="Name (e.g. Rivaj Abaya)">
+      <input id="newUrl" placeholder="https://competitor-site.com/product-page">
+    </div>
+    <div class="row">
+      <select id="newTrackType">
+        <option value="full">Whole page</option>
+        <option value="price">Just the price</option>
+        <option value="product">Just new products</option>
+      </select>
+      <button onclick="addCompetitor()">Add Competitor</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Competitors</h2>
+    <p class="muted" style="margin: -8px 0 16px;">Everyone currently being tracked, and when their site was last checked.</p>
+    <table id="competitorTable">
+      <thead>
+        <tr><th>Name</th><th>Tracking</th><th>Last Checked</th><th></th></tr>
+      </thead>
+      <tbody id="competitorRows"></tbody>
+    </table>
+    <div class="empty" id="competitorEmpty" style="display:none;">No competitors added yet.</div>
+  </div>
+
+  <div class="card">
+    <h2>Change History</h2>
+    <p class="muted" style="margin: -8px 0 16px;">This is the main result of the tool — every real change AI has detected on a competitor's site, in plain English.</p>
+    <table>
+      <thead>
+        <tr><th>Competitor</th><th>When</th><th>What Changed</th></tr>
+      </thead>
+      <tbody id="logRows"></tbody>
+    </table>
+    <div class="empty" id="logEmpty" style="display:none;">No changes detected yet — check back after the next scheduled run.</div>
+  </div>
+
+</div>
+
+<script>
+  // Your Apps Script Web App URL — already set, no setup needed.
+  let API_URL = 'https://script.google.com/macros/s/AKfycbztTSQo3uDiSnxMRmnb03lqmYZKXJ-NIRxo4YhJ6oJ-5-A8pxtwJVFQVrNDdIyI1cHL/exec';
+
+  function saveConfig() {
+    const v = document.getElementById('apiUrl').value.trim();
+    if (v) { localStorage.setItem('trackerApiUrl', v); API_URL = v; load(); }
+  }
+
+  async function load() {
+    try {
+      const res = await fetch(API_URL + '?action=list');
+      const data = await res.json();
+      renderCompetitors(data.competitors || []);
+      renderLog(data.changelog || []);
+    } catch (err) {
+      console.error('Load failed', err);
+    }
+  }
+
+  function renderCompetitors(list) {
+    const rows = document.getElementById('competitorRows');
+    const empty = document.getElementById('competitorEmpty');
+    rows.innerHTML = '';
+    if (!list.length) { empty.style.display = 'block'; return; }
+    empty.style.display = 'none';
+    list.forEach(c => {
+      const tr = document.createElement('tr');
+      const checkedDisplay = c.LastChecked && !isNaN(new Date(c.LastChecked))
+        ? new Date(c.LastChecked).toLocaleString()
+        : (c.LastChecked || 'Not checked yet');
+      tr.innerHTML = `
+        <td><strong>${escapeHtml(c.Name)}</strong><br><span class="muted">${escapeHtml(c.URL)}</span></td>
+        <td><span class="badge">${escapeHtml(c.TrackType || 'full')}</span></td>
+        <td class="muted">${escapeHtml(checkedDisplay)}</td>
+        <td class="actions"><button class="danger" onclick="deleteCompetitor('${c.ID}')">Remove</button></td>
+      `;
+      rows.appendChild(tr);
+    });
+  }
+
+  function renderLog(list) {
+    const rows = document.getElementById('logRows');
+    const empty = document.getElementById('logEmpty');
+    rows.innerHTML = '';
+    if (!list.length) { empty.style.display = 'block'; return; }
+    empty.style.display = 'none';
+    list.forEach(l => {
+      const tr = document.createElement('tr');
+      const timeDisplay = l.Timestamp && !isNaN(new Date(l.Timestamp))
+        ? new Date(l.Timestamp).toLocaleString()
+        : (l.Timestamp || '');
+      tr.innerHTML = `
+        <td>${escapeHtml(l.CompetitorName)}</td>
+        <td class="muted">${escapeHtml(timeDisplay)}</td>
+        <td class="summary">${escapeHtml(l.Summary)}</td>
+      `;
+      rows.appendChild(tr);
+    });
+  }
+
+  async function addCompetitor() {
+    const name = document.getElementById('newName').value.trim();
+    const url = document.getElementById('newUrl').value.trim();
+    const trackType = document.getElementById('newTrackType').value;
+    if (!name || !url) return alert('Name and URL are required.');
+    await fetch(API_URL, {
+      method: 'POST',
+      body: JSON.stringify({ action: 'addCompetitor', name, url, trackType, selector: '' })
+    });
+    document.getElementById('newName').value = '';
+    document.getElementById('newUrl').value = '';
+    load();
+  }
+
+  async function deleteCompetitor(id) {
+    if (!confirm('Remove this competitor?')) return;
+    await fetch(API_URL, {
+      method: 'POST',
+      body: JSON.stringify({ action: 'deleteCompetitor', id })
+    });
+    load();
+  }
+
+  function escapeHtml(str) {
+    if (str === undefined || str === null) return '';
+    return String(str).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+  }
+
+  load();
+</script>
+</body>
+</html>
