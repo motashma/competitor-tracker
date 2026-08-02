@@ -15,24 +15,18 @@
       "name": "Daily Trigger",
       "type": "n8n-nodes-base.scheduleTrigger",
       "typeVersion": 1.2,
-      "position": [
-        -1408,
-        112
-      ]
+      "position": [-1408, 112]
     },
     {
       "parameters": {
-        "url": "https://script.google.com/macros/s/AKfycbztTSQo3uDiSnxMRmnb03lqmYZKXJ-NIRxo4YhJ6oJ-5-A8pxtwJVFQVrNDdIyI1cHL/exec?action=list",
+        "url": "YOUR_APPS_SCRIPT_URL?action=list",
         "options": {}
       },
       "id": "ca74eaf7-5504-41c0-95dd-8c7d7545d334",
       "name": "Get Competitor List",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [
-        -1200,
-        112
-      ]
+      "position": [-1200, 112]
     },
     {
       "parameters": {
@@ -42,30 +36,20 @@
       "name": "Split Competitors",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [
-        -1008,
-        112
-      ]
+      "position": [-1008, 112]
     },
     {
       "parameters": {
         "url": "={{$json.URL}}",
         "options": {
-          "response": {
-            "response": {
-              "responseFormat": "text"
-            }
-          }
+          "response": { "response": { "responseFormat": "text" } }
         }
       },
       "id": "c76ed7cc-1a72-40b3-b197-ba9ee7e0ecfc",
       "name": "Fetch Competitor Page",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [
-        -592,
-        112
-      ]
+      "position": [-592, 112]
     },
     {
       "parameters": {
@@ -78,18 +62,13 @@
             }
           ]
         },
-        "options": {
-          "trimValues": true
-        }
+        "options": { "trimValues": true }
       },
       "id": "cb7bf5a3-eb4c-4393-89df-e1eb4af96949",
       "name": "Extract Content",
       "type": "n8n-nodes-base.html",
       "typeVersion": 1.2,
-      "position": [
-        -400,
-        112
-      ]
+      "position": [-400, 112]
     },
     {
       "parameters": {
@@ -100,30 +79,19 @@
       "name": "Hash & Compare",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [
-        -192,
-        112
-      ],
+      "position": [-192, 112],
       "executeOnce": false
     },
     {
       "parameters": {
         "conditions": {
-          "options": {
-            "caseSensitive": true,
-            "leftValue": "",
-            "typeValidation": "strict",
-            "version": 1
-          },
+          "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "strict", "version": 1 },
           "conditions": [
             {
               "id": "c1",
               "leftValue": "={{$json.changed}}",
               "rightValue": true,
-              "operator": {
-                "type": "boolean",
-                "operation": "equals"
-              }
+              "operator": { "type": "boolean", "operation": "equals" }
             }
           ],
           "combinator": "and"
@@ -134,15 +102,12 @@
       "name": "Has Content Changed?",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2,
-      "position": [
-        0,
-        112
-      ]
+      "position": [0, 112]
     },
     {
       "parameters": {
         "method": "POST",
-        "url": "=https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=...generateContent?key=YOUR_API_KEY_HERE",
+        "url": "=https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=YOUR_API_KEY_HERE",
         "sendBody": true,
         "specifyBody": "json",
         "jsonBody": "={{ { \"contents\": [ { \"parts\": [ { \"text\": $json.prompt } ] } ] } }}",
@@ -152,10 +117,7 @@
       "name": "Summarize with Gemini",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [
-        576,
-        64
-      ],
+      "position": [576, 64],
       "retryOnFail": true
     },
     {
@@ -167,15 +129,12 @@
       "name": "Parse Summary",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [
-        864,
-        96
-      ]
+      "position": [864, 96]
     },
     {
       "parameters": {
         "method": "POST",
-        "url": "https://script.google.com/macros/s/AKfycbztTSQo3uDiSnxMRmnb03lqmYZKXJ-NIRxo4YhJ6oJ-5-A8pxtwJVFQVrNDdIyI1cHL/exec",
+        "url": "YOUR_APPS_SCRIPT_URL",
         "sendBody": true,
         "specifyBody": "json",
         "jsonBody": "={{ { \"action\": \"recordChange\", \"competitorId\": $json.id, \"competitorName\": $json.name, \"hash\": $json.newHash, \"snapshot\": $json.newSnapshot, \"summary\": $json.summary } }}",
@@ -185,15 +144,12 @@
       "name": "Save Change Log",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [
-        1056,
-        -16
-      ]
+      "position": [1056, -16]
     },
     {
       "parameters": {
         "method": "POST",
-        "url": "https://script.google.com/macros/s/AKfycbztTSQo3uDiSnxMRmnb03lqmYZKXJ-NIRxo4YhJ6oJ-5-A8pxtwJVFQVrNDdIyI1cHL/exec",
+        "url": "YOUR_APPS_SCRIPT_URL",
         "sendBody": true,
         "specifyBody": "json",
         "jsonBody": "={{ { \"action\": \"touch\", \"id\": $json.id, \"hash\": $json.newHash, \"snapshot\": $json.newSnapshot } }}",
@@ -203,155 +159,37 @@
       "name": "Touch Last Checked",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [
-        272,
-        240
-      ]
+      "position": [272, 240]
     },
     {
       "parameters": {},
       "type": "n8n-nodes-base.wait",
       "typeVersion": 1.1,
-      "position": [
-        272,
-        96
-      ],
+      "position": [272, 96],
       "id": "363a37b1-507b-4f0d-b8f0-cc19abcb8b93",
-      "name": "Wait",
-      "webhookId": "1d3aa62b-4f57-4f97-8f7a-971cd8d82720"
+      "name": "Wait"
     }
   ],
   "pinData": {},
   "connections": {
-    "Daily Trigger": {
-      "main": [
-        [
-          {
-            "node": "Get Competitor List",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Get Competitor List": {
-      "main": [
-        [
-          {
-            "node": "Split Competitors",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Split Competitors": {
-      "main": [
-        [
-          {
-            "node": "Fetch Competitor Page",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Fetch Competitor Page": {
-      "main": [
-        [
-          {
-            "node": "Extract Content",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Extract Content": {
-      "main": [
-        [
-          {
-            "node": "Hash & Compare",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Hash & Compare": {
-      "main": [
-        [
-          {
-            "node": "Has Content Changed?",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
+    "Daily Trigger": { "main": [[{ "node": "Get Competitor List", "type": "main", "index": 0 }]] },
+    "Get Competitor List": { "main": [[{ "node": "Split Competitors", "type": "main", "index": 0 }]] },
+    "Split Competitors": { "main": [[{ "node": "Fetch Competitor Page", "type": "main", "index": 0 }]] },
+    "Fetch Competitor Page": { "main": [[{ "node": "Extract Content", "type": "main", "index": 0 }]] },
+    "Extract Content": { "main": [[{ "node": "Hash & Compare", "type": "main", "index": 0 }]] },
+    "Hash & Compare": { "main": [[{ "node": "Has Content Changed?", "type": "main", "index": 0 }]] },
     "Has Content Changed?": {
       "main": [
-        [
-          {
-            "node": "Wait",
-            "type": "main",
-            "index": 0
-          }
-        ],
-        [
-          {
-            "node": "Touch Last Checked",
-            "type": "main",
-            "index": 0
-          }
-        ]
+        [{ "node": "Wait", "type": "main", "index": 0 }],
+        [{ "node": "Touch Last Checked", "type": "main", "index": 0 }]
       ]
     },
-    "Summarize with Gemini": {
-      "main": [
-        [
-          {
-            "node": "Parse Summary",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Parse Summary": {
-      "main": [
-        [
-          {
-            "node": "Save Change Log",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Wait": {
-      "main": [
-        [
-          {
-            "node": "Summarize with Gemini",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    }
+    "Summarize with Gemini": { "main": [[{ "node": "Parse Summary", "type": "main", "index": 0 }]] },
+    "Parse Summary": { "main": [[{ "node": "Save Change Log", "type": "main", "index": 0 }]] },
+    "Wait": { "main": [[{ "node": "Summarize with Gemini", "type": "main", "index": 0 }]] }
   },
   "active": false,
-  "settings": {
-    "executionOrder": "v1",
-    "binaryMode": "separate",
-    "availableInMCP": false
-  },
-  "versionId": "b567d929-74f9-4330-aa06-e2eec7b20379",
-  "meta": {
-    "instanceId": "7b2683aa50c1a566a982b28126fbe03351ec1d7f8de05c468060bfb5d2e47927"
-  },
+  "settings": { "executionOrder": "v1", "binaryMode": "separate", "availableInMCP": false },
   "nodeGroups": [],
-  "id": "wYXkxY4G7vbwv1zZ",
   "tags": []
 }
