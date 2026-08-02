@@ -4,177 +4,393 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Competitor Tracker</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
   :root {
-    --bg: #0d0d0f;
-    --panel: #16161a;
-    --line: #2a2a30;
-    --text: #e9e9ec;
-    --muted: #9a9aa3;
-    --silver: #c7c9d1;
-    --accent: #e2e4ea;
-    --danger: #d16b6b;
+    --bg: #0d0f14;
+    --panel: #161922;
+    --panel-2: #1c202b;
+    --line: #262b38;
+    --text: #e8eaf0;
+    --muted: #8b90a3;
+    --faint: #565c70;
+    --teal: #2dd4bf;
+    --teal-dim: #2dd4bf22;
+    --amber: #f0a030;
+    --amber-dim: #f0a03022;
+    --danger: #e8697a;
   }
   * { box-sizing: border-box; }
   body {
     margin: 0;
     background: var(--bg);
     color: var(--text);
-    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    font-family: 'Inter', system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
   }
+  h1, h2, h3, .display { font-family: 'Space Grotesk', sans-serif; }
+  .mono { font-family: 'JetBrains Mono', monospace; }
+
+  /* ---- Header ---- */
   header {
-    padding: 28px 32px 20px;
+    padding: 36px 40px 28px;
     border-bottom: 1px solid var(--line);
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 20px;
+    flex-wrap: wrap;
   }
-  header h1 {
+  .header-title h1 {
+    margin: 0 0 6px;
+    font-size: 26px;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+  }
+  .header-title p {
     margin: 0;
-    font-size: 22px;
-    font-weight: 600;
-    letter-spacing: 0.3px;
+    color: var(--muted);
+    font-size: 14px;
+    max-width: 480px;
+    line-height: 1.5;
   }
-  header p { margin: 6px 0 0; color: var(--muted); font-size: 13px; }
-  .wrap { max-width: 1000px; margin: 0 auto; padding: 28px 20px 60px; }
+  .live-badge {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--teal-dim);
+    border: 1px solid var(--teal);
+    color: var(--teal);
+    padding: 7px 14px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    font-family: 'JetBrains Mono', monospace;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+  .pulse-dot {
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background: var(--teal);
+    box-shadow: 0 0 0 0 var(--teal);
+    animation: pulse 2s infinite;
+  }
+  @keyframes pulse {
+    0% { box-shadow: 0 0 0 0 rgba(45,212,191,0.6); }
+    70% { box-shadow: 0 0 0 7px rgba(45,212,191,0); }
+    100% { box-shadow: 0 0 0 0 rgba(45,212,191,0); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .pulse-dot { animation: none; }
+  }
+
+  .wrap { max-width: 1120px; margin: 0 auto; padding: 32px 40px 60px; }
+
+  /* ---- Stats strip ---- */
+  .stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 14px;
+    margin-bottom: 32px;
+  }
+  .stat {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 18px 20px;
+  }
+  .stat-num {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 30px;
+    font-weight: 700;
+    line-height: 1;
+  }
+  .stat-label {
+    color: var(--muted);
+    font-size: 12px;
+    margin-top: 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+
+  /* ---- Layout: two columns ---- */
+  .grid {
+    display: grid;
+    grid-template-columns: 380px 1fr;
+    gap: 20px;
+    align-items: start;
+  }
+  @media (max-width: 860px) {
+    .grid { grid-template-columns: 1fr; }
+  }
+
   .card {
     background: var(--panel);
     border: 1px solid var(--line);
-    border-radius: 10px;
-    padding: 20px;
-    margin-bottom: 24px;
+    border-radius: 14px;
+    padding: 22px;
   }
+  .card + .card { margin-top: 20px; }
   .card h2 {
-    font-size: 15px;
-    margin: 0 0 16px;
-    color: var(--silver);
-    text-transform: uppercase;
-    letter-spacing: 1px;
+    font-size: 14px;
+    margin: 0 0 4px;
+    font-weight: 600;
+    letter-spacing: 0.02em;
   }
-  .row { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 10px; }
+  .card .sub {
+    color: var(--muted);
+    font-size: 12.5px;
+    margin: 0 0 18px;
+    line-height: 1.5;
+  }
+
+  /* ---- Form ---- */
+  .field { margin-bottom: 12px; }
+  .field label {
+    display: block;
+    font-size: 11.5px;
+    color: var(--muted);
+    margin-bottom: 6px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
   input, select {
-    background: #0f0f12;
+    width: 100%;
+    background: var(--panel-2);
     border: 1px solid var(--line);
     color: var(--text);
-    padding: 9px 12px;
-    border-radius: 6px;
-    font-size: 13px;
-    flex: 1;
-    min-width: 140px;
+    padding: 10px 12px;
+    border-radius: 8px;
+    font-size: 13.5px;
+    font-family: 'Inter', sans-serif;
   }
-  input::placeholder { color: var(--muted); }
+  input:focus, select:focus, button:focus-visible {
+    outline: 2px solid var(--teal);
+    outline-offset: 1px;
+    border-color: var(--teal);
+  }
+  input::placeholder { color: var(--faint); }
   button {
-    background: var(--accent);
-    color: #111;
+    background: var(--teal);
+    color: #06110f;
     border: none;
-    padding: 9px 18px;
-    border-radius: 6px;
-    font-size: 13px;
+    padding: 11px 18px;
+    border-radius: 8px;
+    font-size: 13.5px;
     font-weight: 600;
+    font-family: 'Inter', sans-serif;
     cursor: pointer;
+    width: 100%;
+    margin-top: 6px;
   }
-  button:hover { opacity: 0.85; }
-  button.ghost {
-    background: transparent;
-    color: var(--muted);
-    border: 1px solid var(--line);
+  button:hover { filter: brightness(1.08); }
+
+  /* ---- Competitor list ---- */
+  .comp-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 13px 0;
+    border-bottom: 1px solid var(--line);
+    gap: 10px;
   }
-  button.danger { background: var(--danger); color: #fff; }
-  table { width: 100%; border-collapse: collapse; font-size: 13px; }
-  th { text-align: left; color: var(--muted); font-weight: 500; padding: 8px 6px; border-bottom: 1px solid var(--line); }
-  td { padding: 10px 6px; border-bottom: 1px solid var(--line); vertical-align: top; }
-  tr:last-child td { border-bottom: none; }
-  .muted { color: var(--muted); font-size: 12px; }
-  .actions button { padding: 5px 10px; font-size: 12px; margin-right: 6px; }
-  .empty { color: var(--muted); font-size: 13px; padding: 12px 0; }
-  .badge {
-    display: inline-block;
+  .comp-item:last-child { border-bottom: none; }
+  .comp-name { font-weight: 600; font-size: 13.5px; }
+  .comp-url {
+    color: var(--faint);
     font-size: 11px;
-    padding: 2px 8px;
+    font-family: 'JetBrains Mono', monospace;
+    margin-top: 2px;
+    word-break: break-all;
+  }
+  .comp-meta { display: flex; flex-direction: column; align-items: flex-end; gap: 6px; flex-shrink: 0; }
+  .badge {
+    font-size: 10.5px;
+    padding: 2px 9px;
     border-radius: 20px;
     border: 1px solid var(--line);
     color: var(--muted);
+    font-family: 'JetBrains Mono', monospace;
   }
-  .summary { max-width: 380px; white-space: pre-wrap; }
-  #configBar { display: none; }
+  .checked-time { font-size: 10.5px; color: var(--faint); font-family: 'JetBrains Mono', monospace; }
+  .remove-btn {
+    width: auto;
+    background: transparent;
+    color: var(--danger);
+    border: 1px solid var(--danger);
+    padding: 4px 10px;
+    font-size: 11px;
+    margin-top: 0;
+  }
+  .remove-btn:hover { background: var(--danger); color: #fff; filter: none; }
+
+  /* ---- Signal timeline (change history) ---- */
+  .timeline { position: relative; padding-left: 24px; }
+  .timeline::before {
+    content: '';
+    position: absolute;
+    left: 5px; top: 6px; bottom: 6px;
+    width: 1px;
+    background: var(--line);
+  }
+  .tl-entry { position: relative; padding-bottom: 22px; }
+  .tl-entry:last-child { padding-bottom: 0; }
+  .tl-dot {
+    position: absolute;
+    left: -24px; top: 4px;
+    width: 11px; height: 11px;
+    border-radius: 50%;
+    background: var(--panel-2);
+    border: 2px solid var(--amber);
+  }
+  .tl-entry.latest .tl-dot {
+    background: var(--amber);
+    box-shadow: 0 0 0 0 var(--amber);
+    animation: pulse-amber 2s infinite;
+  }
+  @keyframes pulse-amber {
+    0% { box-shadow: 0 0 0 0 rgba(240,160,48,0.5); }
+    70% { box-shadow: 0 0 0 6px rgba(240,160,48,0); }
+    100% { box-shadow: 0 0 0 0 rgba(240,160,48,0); }
+  }
+  .tl-head {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    margin-bottom: 6px;
+    flex-wrap: wrap;
+  }
+  .tl-name { font-weight: 600; font-size: 14px; }
+  .tl-time { color: var(--faint); font-size: 11px; font-family: 'JetBrains Mono', monospace; }
+  .tl-summary {
+    color: var(--text);
+    font-size: 13px;
+    line-height: 1.6;
+    background: var(--panel-2);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 12px 14px;
+  }
+  .tl-summary p { margin: 0 0 8px; }
+  .tl-summary p:last-child { margin-bottom: 0; }
+  .tl-summary strong { color: var(--amber); font-weight: 600; }
+  .tl-list { margin: 0 0 8px; padding-left: 18px; }
+  .tl-list:last-child { margin-bottom: 0; }
+  .tl-list li { margin-bottom: 4px; }
+
+  .empty {
+    color: var(--faint);
+    font-size: 13px;
+    padding: 20px 0;
+    text-align: center;
+  }
 </style>
 </head>
 <body>
 
 <header>
-  <h1>Competitor Tracker</h1>
-  <p>Automatically checks competitor websites every day, detects when something changes (prices, sales, new products), and summarizes it using AI — so you don't have to check each site manually.</p>
+  <div class="header-title">
+    <h1>Competitor Tracker</h1>
+    <p>Checks competitor websites daily, detects real changes in pricing and content, and summarizes each one in plain English using AI.</p>
+  </div>
+  <div class="live-badge"><span class="pulse-dot"></span> DAILY · 07:00</div>
 </header>
 
 <div class="wrap">
 
-  <div class="card" id="configBar" style="display:none;">
-    <h2>Setup</h2>
-    <div class="row">
-      <input id="apiUrl" placeholder="Paste your Apps Script Web App URL here">
-      <button onclick="saveConfig()">Save</button>
+  <div class="stats">
+    <div class="stat">
+      <div class="stat-num" id="statCompetitors">—</div>
+      <div class="stat-label">Tracked sites</div>
     </div>
-    <p class="muted">This is the URL you got from Deploy → New deployment in Apps Script.</p>
-  </div>
-
-  <div class="card">
-    <h2>Add Competitor</h2>
-    <p class="muted" style="margin: -8px 0 16px;">Add a competitor's website here. The system will start checking it automatically every day.</p>
-    <div class="row">
-      <input id="newName" placeholder="Name (e.g. Rivaj Abaya)">
-      <input id="newUrl" placeholder="https://competitor-site.com/product-page">
+    <div class="stat">
+      <div class="stat-num" id="statChanges">—</div>
+      <div class="stat-label">Changes logged</div>
     </div>
-    <div class="row">
-      <select id="newTrackType">
-        <option value="full">Whole page</option>
-        <option value="price">Just the price</option>
-        <option value="product">Just new products</option>
-      </select>
-      <button onclick="addCompetitor()">Add Competitor</button>
+    <div class="stat">
+      <div class="stat-num mono" id="statLast" style="font-size:18px;">—</div>
+      <div class="stat-label">Last detected</div>
     </div>
   </div>
 
-  <div class="card">
-    <h2>Competitors</h2>
-    <p class="muted" style="margin: -8px 0 16px;">Everyone currently being tracked, and when their site was last checked.</p>
-    <table id="competitorTable">
-      <thead>
-        <tr><th>Name</th><th>Tracking</th><th>Last Checked</th><th></th></tr>
-      </thead>
-      <tbody id="competitorRows"></tbody>
-    </table>
-    <div class="empty" id="competitorEmpty" style="display:none;">No competitors added yet.</div>
-  </div>
+  <div class="grid">
 
-  <div class="card">
-    <h2>Change History</h2>
-    <p class="muted" style="margin: -8px 0 16px;">This is the main result of the tool — every real change AI has detected on a competitor's site, in plain English.</p>
-    <table>
-      <thead>
-        <tr><th>Competitor</th><th>When</th><th>What Changed</th></tr>
-      </thead>
-      <tbody id="logRows"></tbody>
-    </table>
-    <div class="empty" id="logEmpty" style="display:none;">No changes detected yet — check back after the next scheduled run.</div>
-  </div>
+    <!-- LEFT COLUMN -->
+    <div>
+      <div class="card">
+        <h2>Add competitor</h2>
+        <p class="sub">Start tracking a new site — it'll be checked automatically every day.</p>
+        <div class="field">
+          <label>Name</label>
+          <input id="newName" placeholder="e.g. Khaadi">
+        </div>
+        <div class="field">
+          <label>Website URL</label>
+          <input id="newUrl" placeholder="https://example.com/shop">
+        </div>
+        <div class="field">
+          <label>What to track</label>
+          <select id="newTrackType">
+            <option value="full">Whole page</option>
+            <option value="price">Just the price</option>
+            <option value="product">Just new products</option>
+          </select>
+        </div>
+        <button onclick="addCompetitor()">Add competitor</button>
+      </div>
 
+      <div class="card">
+        <h2>Tracked competitors</h2>
+        <p class="sub">Everyone currently being checked, and when they were last visited.</p>
+        <div id="competitorRows"></div>
+        <div class="empty" id="competitorEmpty" style="display:none;">No competitors added yet.</div>
+      </div>
+    </div>
+
+    <!-- RIGHT COLUMN -->
+    <div class="card">
+      <h2>Change signal</h2>
+      <p class="sub">Every real change AI has detected, most recent first.</p>
+      <div class="timeline" id="timeline"></div>
+      <div class="empty" id="logEmpty" style="display:none;">No changes detected yet. Check back after the next scheduled run.</div>
+    </div>
+
+  </div>
 </div>
 
 <script>
-  // Your Apps Script Web App URL — already set, no setup needed.
   let API_URL = 'https://script.google.com/macros/s/AKfycbztTSQo3uDiSnxMRmnb03lqmYZKXJ-NIRxo4YhJ6oJ-5-A8pxtwJVFQVrNDdIyI1cHL/exec';
-
-  function saveConfig() {
-    const v = document.getElementById('apiUrl').value.trim();
-    if (v) { localStorage.setItem('trackerApiUrl', v); API_URL = v; load(); }
-  }
 
   async function load() {
     try {
       const res = await fetch(API_URL + '?action=list');
       const data = await res.json();
+      renderStats(data.competitors || [], data.changelog || []);
       renderCompetitors(data.competitors || []);
-      renderLog(data.changelog || []);
+      renderTimeline(data.changelog || []);
     } catch (err) {
       console.error('Load failed', err);
     }
+  }
+
+  function safeDate(v) {
+    if (!v) return null;
+    const d = new Date(v);
+    return isNaN(d) ? null : d;
+  }
+
+  function renderStats(competitors, changelog) {
+    document.getElementById('statCompetitors').textContent = competitors.length;
+    document.getElementById('statChanges').textContent = changelog.length;
+    const latest = changelog
+      .map(l => safeDate(l.Timestamp))
+      .filter(Boolean)
+      .sort((a, b) => b - a)[0];
+    document.getElementById('statLast').textContent = latest
+      ? latest.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
+      : '—';
   }
 
   function renderCompetitors(list) {
@@ -184,37 +400,46 @@
     if (!list.length) { empty.style.display = 'block'; return; }
     empty.style.display = 'none';
     list.forEach(c => {
-      const tr = document.createElement('tr');
-      const checkedDisplay = c.LastChecked && !isNaN(new Date(c.LastChecked))
-        ? new Date(c.LastChecked).toLocaleString()
-        : (c.LastChecked || 'Not checked yet');
-      tr.innerHTML = `
-        <td><strong>${escapeHtml(c.Name)}</strong><br><span class="muted">${escapeHtml(c.URL)}</span></td>
-        <td><span class="badge">${escapeHtml(c.TrackType || 'full')}</span></td>
-        <td class="muted">${escapeHtml(checkedDisplay)}</td>
-        <td class="actions"><button class="danger" onclick="deleteCompetitor('${c.ID}')">Remove</button></td>
+      const checkedDate = safeDate(c.LastChecked);
+      const checkedDisplay = checkedDate ? checkedDate.toLocaleString(undefined, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) : 'Not checked yet';
+      const div = document.createElement('div');
+      div.className = 'comp-item';
+      div.innerHTML = `
+        <div>
+          <div class="comp-name">${escapeHtml(c.Name)}</div>
+          <div class="comp-url">${escapeHtml(c.URL)}</div>
+        </div>
+        <div class="comp-meta">
+          <span class="badge">${escapeHtml(c.TrackType || 'full')}</span>
+          <span class="checked-time">${escapeHtml(checkedDisplay)}</span>
+          <button class="remove-btn" onclick="deleteCompetitor('${c.ID}')">Remove</button>
+        </div>
       `;
-      rows.appendChild(tr);
+      rows.appendChild(div);
     });
   }
 
-  function renderLog(list) {
-    const rows = document.getElementById('logRows');
+  function renderTimeline(list) {
+    const el = document.getElementById('timeline');
     const empty = document.getElementById('logEmpty');
-    rows.innerHTML = '';
-    if (!list.length) { empty.style.display = 'block'; return; }
+    el.innerHTML = '';
+    const sorted = [...list].sort((a, b) => (safeDate(b.Timestamp) || 0) - (safeDate(a.Timestamp) || 0));
+    if (!sorted.length) { empty.style.display = 'block'; return; }
     empty.style.display = 'none';
-    list.forEach(l => {
-      const tr = document.createElement('tr');
-      const timeDisplay = l.Timestamp && !isNaN(new Date(l.Timestamp))
-        ? new Date(l.Timestamp).toLocaleString()
-        : (l.Timestamp || '');
-      tr.innerHTML = `
-        <td>${escapeHtml(l.CompetitorName)}</td>
-        <td class="muted">${escapeHtml(timeDisplay)}</td>
-        <td class="summary">${escapeHtml(l.Summary)}</td>
+    sorted.forEach((l, i) => {
+      const d = safeDate(l.Timestamp);
+      const timeDisplay = d ? d.toLocaleString(undefined, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) : (l.Timestamp || '');
+      const div = document.createElement('div');
+      div.className = 'tl-entry' + (i === 0 ? ' latest' : '');
+      div.innerHTML = `
+        <div class="tl-dot"></div>
+        <div class="tl-head">
+          <span class="tl-name">${escapeHtml(l.CompetitorName)}</span>
+          <span class="tl-time">${escapeHtml(timeDisplay)}</span>
+        </div>
+        <div class="tl-summary">${formatSummary(l.Summary)}</div>
       `;
-      rows.appendChild(tr);
+      el.appendChild(div);
     });
   }
 
@@ -239,6 +464,29 @@
       body: JSON.stringify({ action: 'deleteCompetitor', id })
     });
     load();
+  }
+
+  function formatSummary(text) {
+    if (!text) return '';
+    let escaped = escapeHtml(text);
+    // Convert **bold** to <strong>bold</strong>
+    escaped = escaped.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+    // Convert lines starting with "* " or "- " into bullet points
+    const lines = escaped.split('\n');
+    let html = '';
+    let inList = false;
+    for (const line of lines) {
+      const trimmed = line.trim();
+      if (/^[\*\-]\s+/.test(trimmed)) {
+        if (!inList) { html += '<ul class="tl-list">'; inList = true; }
+        html += `<li>${trimmed.replace(/^[\*\-]\s+/, '')}</li>`;
+      } else {
+        if (inList) { html += '</ul>'; inList = false; }
+        if (trimmed) html += `<p>${trimmed}</p>`;
+      }
+    }
+    if (inList) html += '</ul>';
+    return html;
   }
 
   function escapeHtml(str) {
